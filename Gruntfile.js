@@ -9,8 +9,6 @@
 /* Node modules */
 var semver = require("semver");
 
-var _ = require("lodash");
-
 
 module.exports = function (grunt) {
 
@@ -214,29 +212,6 @@ module.exports = function (grunt) {
             },
             gitPushTags: {
                 command: "git push origin --tags"
-            },
-            migrate: {
-                command: function () {
-
-                    /* Get the migration version to aim for */
-                    var version = Number(pkg.migration);
-
-                    /* Ignore if not a number */
-                    var command = "";
-
-                    if (_.isNaN(version) === false) {
-
-                        command += "east migrate";
-
-                        for (var i = 1; i <= version; i++) {
-                            command += " " + String(i);
-                        }
-
-                    }
-
-                    return command;
-
-                }
             },
             npmVersion: {
                 command: function () {
