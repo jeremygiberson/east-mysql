@@ -11,6 +11,7 @@ var path = require("path");
 
 /* Third-party modules */
 var chai = require("chai");
+var proxyquire = require("proxyquire");
 var sinon = require("sinon");
 
 chai.use(require("sinon-chai"));
@@ -19,10 +20,31 @@ var expect = chai.expect;
 
 
 /* Files */
-var Adapter = require("../../lib/adapter");
 
 
 describe("adapter test", function () {
+
+
+    var db,
+        mysql,
+        Adapter;
+    beforeEach(function () {
+
+        db = {
+            connect: sinon.stub(),
+            end: sinon.stub(),
+            query: sinon.stub()
+        };
+
+        mysql = {
+            createConnection: sinon.stub()
+        };
+
+        Adapter = proxyquire("../../lib/adapter", {
+            mysql: mysql
+        });
+
+    });
 
 
     describe("instantiation tests", function () {
@@ -32,7 +54,7 @@ describe("adapter test", function () {
             var fail = false;
 
             try {
-                var obj = new Adapter();
+                new Adapter();
             } catch (err) {
                 fail = true;
 
@@ -65,6 +87,245 @@ describe("adapter test", function () {
 
         describe("#connect", function () {
 
+            describe("with DB creation", function () {
+
+                var obj;
+                beforeEach(function () {
+                    obj = new Adapter({
+                        createDbOnConnect: true,
+                        url: "mysql://user:password@10.20.30.40/dbname"
+                    });
+                });
+
+                it("should create the database then successfully create a DB instance", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields(null);
+
+                    db.query.yields(null);
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledTwice
+                        .calledWith("mysql://user:password@10.20.30.40/")
+                        .calledWith("mysql://user:password@10.20.30.40/dbname");
+
+                    expect(obj.db.connect).to.be.calledTwice;
+
+                    expect(obj.db.query).to.be.calledTwice
+                        .calledWith("CREATE DATABASE IF NOT EXISTS dbname")
+                        .calledWith("CREATE TABLE IF NOT EXISTS _migrations (`name` VARCHAR(50) NOT NULL, PRIMARY KEY (`name`))");
+
+                    expect(obj.db.end).to.be.calledOnce;
+
+                    expect(cb).to.be.calledOnce
+                        .calledWithExactly(null, {
+                            db: db
+                        });
+
+                });
+
+                it("should handle an initial connection error", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields("err");
+
+                    db.query.yields(null);
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledOnce
+                        .calledWith("mysql://user:password@10.20.30.40/");
+
+                    expect(db.connect).to.be.calledOnce;
+
+                    expect(db.query).to.not.be.called;
+
+                    expect(db.end).to.not.be.called;
+
+                    expect(cb).to.be.calledOnce
+                        .calledWith("err");
+
+                });
+
+                it("should handle a create _migrations table error", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields(null);
+
+                    db.query.yields("err");
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledOnce
+                        .calledWith("mysql://user:password@10.20.30.40/");
+
+                    expect(db.connect).to.be.calledOnce;
+
+                    expect(db.query).to.be.calledOnce
+                        .calledWith("CREATE DATABASE IF NOT EXISTS dbname");
+
+                    expect(db.end).to.not.be.called;
+
+                    expect(cb).to.be.calledOnce
+                        .calledWith("err");
+
+                });
+
+                it("should handle a connection error", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.onFirstCall().yields(null)
+                        .onSecondCall().yields("err");
+
+                    db.query.yields(null);
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledTwice
+                        .calledWith("mysql://user:password@10.20.30.40/")
+                        .calledWith("mysql://user:password@10.20.30.40/dbname");
+
+                    expect(obj.db.connect).to.be.calledTwice;
+
+                    expect(obj.db.query).to.be.calledOnce;
+
+                    expect(obj.db.end).to.be.calledOnce;
+
+                    expect(cb).to.be.calledOnce
+                        .calledWithExactly("err");
+
+                });
+
+                it("should handle a DB create migration table error", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields(null);
+
+                    db.query.onFirstCall().yields(null)
+                        .onSecondCall().yields("err");
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledTwice
+                        .calledWith("mysql://user:password@10.20.30.40/")
+                        .calledWith("mysql://user:password@10.20.30.40/dbname");
+
+                    expect(obj.db.connect).to.be.calledTwice;
+
+                    expect(obj.db.query).to.be.calledTwice
+                        .calledWith("CREATE DATABASE IF NOT EXISTS dbname")
+                        .calledWith("CREATE TABLE IF NOT EXISTS _migrations (`name` VARCHAR(50) NOT NULL, PRIMARY KEY (`name`))");
+
+                    expect(obj.db.end).to.be.calledOnce;
+
+                    expect(cb).to.be.calledOnce
+                        .calledWithExactly("err");
+
+                });
+
+            });
+
+            describe("without DB creation", function () {
+
+                var obj;
+                beforeEach(function () {
+                    obj = new Adapter({
+                        url: "mysql://user:password@10.20.30.40/dbname"
+                    });
+                });
+
+                it("should successfully create a DB instance", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields(null);
+
+                    db.query.yields(null);
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledOnce
+                        .calledWith("mysql://user:password@10.20.30.40/dbname");
+
+                    expect(obj.db.connect).to.be.calledOnce;
+
+                    expect(obj.db.query).to.be.calledOnce
+                        .calledWith("CREATE TABLE IF NOT EXISTS _migrations (`name` VARCHAR(50) NOT NULL, PRIMARY KEY (`name`))");
+
+                    expect(cb).to.be.calledOnce
+                        .calledWithExactly(null, {
+                            db: db
+                        });
+
+                });
+
+                it("should handle a connection error", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields("err");
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledOnce
+                        .calledWith("mysql://user:password@10.20.30.40/dbname");
+
+                    expect(obj.db.connect).to.be.calledOnce;
+
+                    expect(obj.db.query).to.not.be.called;
+
+                    expect(cb).to.be.calledOnce
+                        .calledWithExactly("err");
+
+                });
+
+                it("should handle a DB create migration table error", function () {
+
+                    var cb = sinon.spy();
+
+                    mysql.createConnection.returns(db);
+
+                    db.connect.yields(null);
+
+                    db.query.yields("err");
+
+                    obj.connect(cb);
+
+                    expect(mysql.createConnection).to.be.calledOnce
+                        .calledWith("mysql://user:password@10.20.30.40/dbname");
+
+                    expect(obj.db.connect).to.be.calledOnce;
+
+                    expect(obj.db.query).to.be.calledOnce
+                        .calledWith("CREATE TABLE IF NOT EXISTS _migrations (`name` VARCHAR(50) NOT NULL, PRIMARY KEY (`name`))");
+
+                    expect(cb).to.be.calledOnce
+                        .calledWithExactly("err");
+
+                });
+
+            });
+
         });
 
         describe("post-connection", function () {
@@ -76,10 +337,7 @@ describe("adapter test", function () {
                     url: "some url"
                 });
 
-                obj.db = {
-                    end: sinon.stub(),
-                    query: sinon.stub()
-                };
+                obj.db = db;
 
             });
 
