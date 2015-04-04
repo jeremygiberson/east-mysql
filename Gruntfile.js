@@ -233,10 +233,10 @@ module.exports = function (grunt) {
             coverage: {
                 files: [
                     "Gruntfile.js",
-                    "src/**/*.js",
-                    "src/**/*.json",
-                    "test/**/*.js",
-                    "test/**/*.json"
+                    "<%= config.src %>/**/*.js",
+                    "<%= config.src %>/**/*.json",
+                    "<%= config.test %>/**/*.js",
+                    "<%= config.test %>/**/*.json"
                 ],
                 tasks: [
                     "mocha_istanbul"
@@ -245,10 +245,10 @@ module.exports = function (grunt) {
             test: {
                 files: [
                     "Gruntfile.js",
-                    "src/**/*.js",
-                    "src/**/*.json",
-                    "test/**/*.js",
-                    "test/**/*.json"
+                    "<%= config.src %>/**/*.js",
+                    "<%= config.src %>/**/*.json",
+                    "<%= config.test %>/**/*.js",
+                    "<%= config.test %>/**/*.json"
                 ],
                 tasks: [
                     "test"
