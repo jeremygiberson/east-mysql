@@ -14,3 +14,12 @@ services:
 script:
 - grunt test
 - grunt coverage
+deploy:
+  provider: npm
+  email: simon@simonemms.com
+  api_key:
+    secure: i8D/sL4SM8JKiaLW2tJ1x6d+tZbwctfNSE0UhPPV6W8Im0wIJX+G3tuUVOQKjS2NqJoNilaL81yBsRbmng6hc2zEGgvyYTb6SnMySeBQAl2kUm2UVnqc1lK0v6p7XBXGJjEiJ4P++smZfypb0uDWJ1bHDMCUe5URCVbh+dHV670=
+  on:
+    all_branches: true
+    tags: true
+    repo: riggerthegeek/east-mysql
