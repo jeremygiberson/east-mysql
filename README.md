@@ -81,6 +81,14 @@ to execute the migrations
 to rollback the migration
 
     east rollback
+    
+## Creating the database
+
+if the database doesn't exist when first migration is created, add the following to the JSON in your `.eastrc` file
+
+    "createDbOnConnect": true
+
+This will automatically create the database if it doesn't exist
 
 ## Running tests
 
