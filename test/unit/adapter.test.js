@@ -80,6 +80,24 @@ describe("adapter test", function () {
 
         });
 
+        it("should override the config with params.config", function () {
+
+            var obj = new Adapter({
+                url: "some url",
+                eastMysql: {
+                    migrationFile: 'overrideMigrateTemplate.js',
+                    migrationTable: '_override'
+                }
+            });
+
+            expect(obj.config).to.be.an("object")
+                .to.be.eql({
+                migrationFile: "overrideMigrateTemplate.js",
+                migrationTable: "_override"
+            });
+
+        });
+
     });
 
 
