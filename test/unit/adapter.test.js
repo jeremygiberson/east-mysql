@@ -84,7 +84,7 @@ describe("adapter test", function () {
 
             var obj = new Adapter({
                 url: "some url",
-                config: {
+                eastMysql: {
                     migrationFile: 'overrideMigrateTemplate.js',
                     migrationTable: '_override'
                 }
