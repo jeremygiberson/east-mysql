@@ -1,6 +1,6 @@
 {
   "name": "east-mysql",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "MySQL adapter for \"east\" (node.js database migration tool)",
   "main": "./lib/adapter",
   "scripts": {
